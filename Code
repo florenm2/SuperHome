@@ -1,0 +1,253 @@
+#include "Arduino.h"
+#if !defined(SERIAL_PORT_MONITOR)
+  #error "Arduino version not supported. Please update your IDE to the latest version."
+#endif
+
+#if defined(SERIAL_PORT_USBVIRTUAL)
+  // Shield Jumper on HW (for Leonardo and Due)
+  #define port SERIAL_PORT_HARDWARE
+  #define pcSerial SERIAL_PORT_USBVIRTUAL
+#else
+  // Shield Jumper on SW (using pins 12/13 or 8/9 as RX/TX)
+  #include "SoftwareSerial.h"
+  SoftwareSerial port(12, 13);
+  #define pcSerial SERIAL_PORT_MONITOR
+#endif
+
+#include "EasyVR.h"
+
+EasyVR easyvr(port);
+
+//Groups and Commands
+enum Groups
+{
+  GROUP_1  = 1,
+};
+
+enum Group1 
+{
+  G1_LIGHTS_ON = 0,
+  G1_LIGHTS_OFF = 1,
+  G1_UNLOCK = 2,
+  G1_FAN_ON = 3,
+  G1_LOCK = 4,
+  G1_FAN_OFF = 5,
+  G1_PLAY_MUSIC = 6,
+  G1_MUSIC_OFF = 7,
+  G1_RED_ON = 8,
+  G1_BLUE_ON = 9,
+  G1_GREEN_ON = 10,
+  G1_SET_MOOD = 11,
+};
+
+
+int8_t group, idx;
+
+
+#define REDPIN 6
+#define GREENPIN 5
+#define BLUEPIN 3
+
+int RedVal = 0; 
+int GreenVal = 0;
+int BlueVal = 0;
+
+void setup()
+{
+
+  pinMode(REDPIN, OUTPUT);
+  pinMode(GREENPIN, OUTPUT);
+  pinMode(BLUEPIN, OUTPUT);
+  pinMode(9, OUTPUT);
+  // setup PC serial port
+  pcSerial.begin(9600);
+
+  // bridge mode?
+  int mode = easyvr.bridgeRequested(pcSerial);
+  switch (mode)
+  {
+  case EasyVR::BRIDGE_NONE:
+    // setup EasyVR serial port
+    port.begin(9600);
+    // run normally
+    pcSerial.println(F("---"));
+    pcSerial.println(F("Bridge not started!"));
+    break;
+    
+  case EasyVR::BRIDGE_NORMAL:
+    // setup EasyVR serial port (low speed)
+    port.begin(9600);
+    // soft-connect the two serial ports (PC and EasyVR)
+    easyvr.bridgeLoop(pcSerial);
+    // resume normally if aborted
+    pcSerial.println(F("---"));
+    pcSerial.println(F("Bridge connection aborted!"));
+    break;
+    
+  case EasyVR::BRIDGE_BOOT:
+    // setup EasyVR serial port (high speed)
+    port.begin(115200);
+    // soft-connect the two serial ports (PC and EasyVR)
+    easyvr.bridgeLoop(pcSerial);
+    // resume normally if aborted
+    pcSerial.println(F("---"));
+    pcSerial.println(F("Bridge connection aborted!"));
+    break;
+  }
+
+  while (!easyvr.detect())
+  {
+    Serial.println("EasyVR not detected!");
+    delay(1000);
+  }
+
+  easyvr.setPinOutput(EasyVR::IO1, LOW);
+  Serial.println("EasyVR detected!");
+  easyvr.setTimeout(5);
+  easyvr.setLanguage(0);
+
+  group = EasyVR::TRIGGER; //<-- start group (customize)
+}
+
+void action();
+
+void loop()
+{
+  easyvr.setPinOutput(EasyVR::IO1, HIGH); // LED on (listening)
+
+  Serial.print("Say a command in Group ");
+  Serial.println(group);
+  easyvr.recognizeCommand(group);
+
+  do
+  {
+    // can do some processing while waiting for a spoken command
+  }
+  while (!easyvr.hasFinished());
+ 
+  easyvr.setPinOutput(EasyVR::IO1, LOW); // LED off
+
+  idx = easyvr.getWord();
+  if (idx >= 0)
+  {
+    group = GROUP_1;
+    // built-in trigger (ROBOT)
+    // group = GROUP_X; <-- jump to another group X
+    return;
+  }
+  idx = easyvr.getCommand();
+  if (idx >= 0)
+  {
+    // print debug message
+    uint8_t train = 0;
+    char name[32];
+    Serial.print("Command: ");
+    Serial.print(idx);
+    if (easyvr.dumpCommand(group, idx, name, train))
+    {
+      Serial.print(" = ");
+      Serial.println(name);
+    }
+    else
+      Serial.println();
+  // beep
+    easyvr.playSound(0, EasyVR::VOL_FULL);
+    // perform some action
+    action();
+  }
+  else // errors or timeout
+  {
+    if (easyvr.isTimeout())
+      Serial.println("Timed out, try again...");
+    int16_t err = easyvr.getError();
+    if (err >= 0)
+    {
+      Serial.print("Error ");
+      Serial.println(err, HEX);
+    }
+  }
+}
+
+void action()
+{
+    switch (group)
+    {
+    case GROUP_1:
+      switch (idx)
+      {
+      case G1_LIGHTS_ON:
+        analogWrite(REDPIN, 255);
+        analogWrite(GREENPIN, 255);
+        analogWrite(BLUEPIN, 255);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_LIGHTS_OFF:
+        analogWrite(BLUEPIN, 0);
+        analogWrite(GREENPIN, 0);
+        analogWrite(REDPIN, 0);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_UNLOCK:
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_FAN_ON:
+        digitalWrite(9, HIGH);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_LOCK:
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_FAN_OFF:
+        digitalWrite(9, LOW);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_PLAY_MUSIC:
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_MUSIC_OFF:
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_RED_ON:
+        analogWrite(REDPIN, 255);
+        analogWrite(GREENPIN, 0);
+        analogWrite(BLUEPIN,0 );
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_BLUE_ON:
+        analogWrite(REDPIN, 0);
+        analogWrite(GREENPIN,0);
+        analogWrite(BLUEPIN, 255);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_GREEN_ON:
+        analogWrite(REDPIN, 0);
+        analogWrite(GREENPIN, 255);
+        analogWrite(BLUEPIN,0);
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_SET_MOOD:
+       for(int i = 0; i <150; i++)
+       {
+        analogWrite(REDPIN, i);
+        analogWrite(GREENPIN,0 );
+        analogWrite(BLUEPIN,0 );
+        delay(25);
+        }
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      }
+      break;
+    }
+}
