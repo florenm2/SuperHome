@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "pitches.h"
 #if !defined(SERIAL_PORT_MONITOR)
   #error "Arduino version not supported. Please update your IDE to the latest version."
 #endif
@@ -28,21 +29,17 @@ enum Group1
 {
   G1_LIGHTS_ON = 0,
   G1_LIGHTS_OFF = 1,
-  G1_UNLOCK = 2,
-  G1_FAN_ON = 3,
-  G1_LOCK = 4,
-  G1_FAN_OFF = 5,
-  G1_PLAY_MUSIC = 6,
-  G1_MUSIC_OFF = 7,
-  G1_RED_ON = 8,
-  G1_BLUE_ON = 9,
-  G1_GREEN_ON = 10,
-  G1_SET_MOOD = 11,
+  G1_FAN_ON = 2,
+  G1_FAN_OFF = 3,
+  G1_PLAY_MUSIC = 4,
+  G1_RED_ON = 5,
+  G1_BLUE_ON = 6,
+  G1_GREEN_ON = 7,
+  G1_SET_MOOD = 8,
 };
 
 
 int8_t group, idx;
-
 
 #define REDPIN 6
 #define GREENPIN 5
@@ -52,13 +49,20 @@ int RedVal = 0;
 int GreenVal = 0;
 int BlueVal = 0;
 
+int melody[] = {
+  NOTE_AS3, NOTE_C4, NOTE_DS4, NOTE_G4, NOTE_G4, NOTE_GS4, NOTE_AS4, NOTE_GS4, NOTE_G4, NOTE_G4, NOTE_F4, NOTE_DS4, NOTE_DS4, NOTE_C4
+};
+int noteDurations[] = {
+  2, 2, 2, 1, 4, 4, 4, 4, 3, 3, 4, 4, 2, 2
+};
+
 void setup()
 {
-
   pinMode(REDPIN, OUTPUT);
   pinMode(GREENPIN, OUTPUT);
   pinMode(BLUEPIN, OUTPUT);
   pinMode(9, OUTPUT);
+  pinMode(7, OUTPUT);
   // setup PC serial port
   pcSerial.begin(9600);
 
@@ -124,7 +128,7 @@ void loop()
     // can do some processing while waiting for a spoken command
   }
   while (!easyvr.hasFinished());
- 
+  
   easyvr.setPinOutput(EasyVR::IO1, LOW); // LED off
 
   idx = easyvr.getWord();
@@ -132,7 +136,6 @@ void loop()
   {
     group = GROUP_1;
     // built-in trigger (ROBOT)
-    // group = GROUP_X; <-- jump to another group X
     return;
   }
   idx = easyvr.getCommand();
@@ -150,7 +153,7 @@ void loop()
     }
     else
       Serial.println();
-  // beep
+	// beep
     easyvr.playSound(0, EasyVR::VOL_FULL);
     // perform some action
     action();
@@ -179,73 +182,53 @@ void action()
         analogWrite(REDPIN, 255);
         analogWrite(GREENPIN, 255);
         analogWrite(BLUEPIN, 255);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_LIGHTS_OFF:
         analogWrite(BLUEPIN, 0);
         analogWrite(GREENPIN, 0);
         analogWrite(REDPIN, 0);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
-        break;
-      case G1_UNLOCK:
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_FAN_ON:
         digitalWrite(9, HIGH);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
-        break;
-      case G1_LOCK:
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_FAN_OFF:
         digitalWrite(9, LOW);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_PLAY_MUSIC:
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
-        break;
-      case G1_MUSIC_OFF:
         // write your action code here
         // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_RED_ON:
         analogWrite(REDPIN, 255);
         analogWrite(GREENPIN, 0);
-        analogWrite(BLUEPIN,0 );
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
+        analogWrite(BLUEPIN,0);
         break;
       case G1_BLUE_ON:
         analogWrite(REDPIN, 0);
         analogWrite(GREENPIN,0);
-        analogWrite(BLUEPIN, 255);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
+        analogWrite(BLUEPIN, 250);
         break;
       case G1_GREEN_ON:
         analogWrite(REDPIN, 0);
-        analogWrite(GREENPIN, 255);
+        analogWrite(GREENPIN, 250);
         analogWrite(BLUEPIN,0);
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       case G1_SET_MOOD:
-       for(int i = 0; i <150; i++)
-       {
+      analogWrite(REDPIN,0);
+        for (int thisNote = 0; thisNote < 15; thisNote++) {
+         int noteDuration = 1000 / noteDurations[thisNote];
+         tone(7, melody[thisNote], noteDuration);
+         int pauseBetweenNotes = noteDuration * 1.30;
+         delay(pauseBetweenNotes);
+         noTone(7);
+        }
+        for(int i = 0; i <150; i++)
+        {
         analogWrite(REDPIN, i);
         analogWrite(GREENPIN,0 );
         analogWrite(BLUEPIN,0 );
-        delay(25);
+        delay(50);
         }
-        // write your action code here
-        // group = GROUP_X; <-- or jump to another group X for composite commands
         break;
       }
       break;
