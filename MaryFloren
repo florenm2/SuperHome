@@ -1,0 +1,76 @@
+enum Group1 
+{
+  G1_LIGHTS_ON = 0,
+  G1_LIGHTS_OFF = 1,
+  G1_FAN_ON = 2,
+  G1_FAN_OFF = 3,
+  G1_PLAY_MUSIC = 4,
+  G1_RED_ON = 5,
+  G1_BLUE_ON = 6,
+  G1_GREEN_ON = 7,
+  G1_SET_MOOD = 8,
+};
+
+
+
+{
+    switch (group)
+    {
+    case GROUP_1:
+      switch (idx)
+      {
+      case G1_LIGHTS_ON:
+        analogWrite(REDPIN, 255);
+        analogWrite(GREENPIN, 255);
+        analogWrite(BLUEPIN, 255);
+        break;
+      case G1_LIGHTS_OFF:
+        analogWrite(BLUEPIN, 0);
+        analogWrite(GREENPIN, 0);
+        analogWrite(REDPIN, 0);
+        break;
+      case G1_FAN_ON:
+        digitalWrite(9, HIGH);
+        break;
+      case G1_FAN_OFF:
+        digitalWrite(9, LOW);
+        break;
+      case G1_PLAY_MUSIC:
+        // write your action code here
+        // group = GROUP_X; <-- or jump to another group X for composite commands
+        break;
+      case G1_RED_ON:
+        analogWrite(REDPIN, 255);
+        analogWrite(GREENPIN, 0);
+        analogWrite(BLUEPIN,0);
+        break;
+      case G1_BLUE_ON:
+        analogWrite(REDPIN, 0);
+        analogWrite(GREENPIN,0);
+        analogWrite(BLUEPIN, 250);
+        break;
+      case G1_GREEN_ON:
+        analogWrite(REDPIN, 0);
+        analogWrite(GREENPIN, 250);
+        analogWrite(BLUEPIN,0);
+        break;
+      case G1_SET_MOOD:
+      analogWrite(REDPIN,0);
+        for (int thisNote = 0; thisNote < 15; thisNote++) {
+         int noteDuration = 1000 / noteDurations[thisNote];
+         tone(7, melody[thisNote], noteDuration);
+         int pauseBetweenNotes = noteDuration * 1.30;
+         delay(pauseBetweenNotes);
+         noTone(7);
+        }
+        for(int i = 0; i <150; i++)
+        {
+        analogWrite(REDPIN, i);
+        analogWrite(GREENPIN,0 );
+        analogWrite(BLUEPIN,0 );
+        delay(50);
+        }
+        break;
+      }
+      break;
+    }
