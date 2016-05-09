@@ -42,13 +42,10 @@
         break;
       case G1_SET_MOOD:
       analogWrite(REDPIN,0);
-        for (int thisNote = 0; thisNote < 15; thisNote++) {
-         int noteDuration = 1000 / noteDurations[thisNote];
-         tone(7, melody[thisNote], noteDuration);
-         int pauseBetweenNotes = noteDuration * 1.30;
-         delay(pauseBetweenNotes);
-         noTone(7);
-        }
+      
+      //melody written by Steph
+      
+      
         for(int i = 0; i <150; i++)
         {
         analogWrite(REDPIN, i);
