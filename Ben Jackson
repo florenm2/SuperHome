@@ -1,1 +1,100 @@
 
+
+#define REDPIN 5
+#define GREENPIN 6
+#define BLUEPIN 3
+
+int RedVal = 0; 
+int GreenVal = 0;
+int BlueVal = 0;
+
+//photoResistor set up
+#define Value A0
+int sensor = 0;
+int Dimmer = 0;
+int AveDimmer = 0;
+
+//Potentiometer set up
+#define PotentValue A1
+int Potent = 0;
+
+
+void setup() {
+pinMode(REDPIN, OUTPUT);
+pinMode(GREENPIN, OUTPUT);
+pinMode(BLUEPIN, OUTPUT);
+
+Serial.begin(9600);
+
+}
+
+void loop() {
+
+sensor = analogRead(Value);
+Dimmer = map(sensor,6, 70,1,15);
+Potent = analogRead(PotentValue);
+
+Serial.print("PhotoSensor = ");
+Serial.print(sensor);
+Serial.println(" ");
+Serial.print("Dimmer Value= ");
+Serial.print(Dimmer);
+Serial.println(" ");
+Serial.print("Potent= ");
+Serial.print(Potent);
+Serial.println(" ");
+
+ 
+  if(Potent < 205)
+  {
+    Potent = map(Potent,0,205,0,255);
+    
+    RedVal = Potent;         //Off to White
+    GreenVal = Potent;       
+    BlueVal = Potent;  
+    }
+
+  else if (Potent < 409)
+  {
+   Potent = map(Potent,206,409,0,255);
+
+    RedVal = 255;            //White to Red
+    GreenVal = (255-Potent);
+    BlueVal = 255-Potent; 
+  }
+
+  else if (Potent < 614)  
+  {                  
+    Potent = map(Potent,410,614,0,255);
+
+    RedVal = 255-Potent;    //Red to Green
+    GreenVal = Potent;
+    BlueVal = 0; 
+  }
+  else if (Potent < 819) 
+  {
+    Potent = map(Potent,614,819,0,255);
+
+    RedVal = 0;             //Green to Blue
+    GreenVal = 255-Potent;           
+    BlueVal = Potent;   
+  }
+  else 
+   {
+    Potent = map(Potent,820,1023,0,255); // Normalize to 0-255
+
+    RedVal = Potent;        //Blue to Red
+    GreenVal =0;           
+    BlueVal = 255 -Potent; 
+    
+   }
+ 
+  analogWrite(REDPIN, (RedVal)/abs(Dimmer));   // Putting values to the LEDS, also Dims the LEDs.
+  analogWrite(GREENPIN, GreenVal/abs(Dimmer)); 
+  analogWrite(BLUEPIN, BlueVal/abs(Dimmer)); 
+
+  
+  
+}
+
+
